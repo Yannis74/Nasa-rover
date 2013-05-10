@@ -13,14 +13,25 @@
   <div id="jasmine_content"></div>
   <script src="js/libs/require.js"></script>
   <script type="text/javascript">
+  requirejs.config({
+      "paths": {
+        "jquery": "//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min"
+      }
+  });
+
   require(
-        ['tests/roverTest'],
+        ['jquery','tests/roverTest'],
         function(roverTest){
+
           var jasmineEnv = jasmine.getEnv()
           jasmineEnv.addReporter(new jasmine.HtmlReporter)
-          window.onload = function() {
-            jasmineEnv.execute()
-          };
+
+
+            $(window).ready(function(){
+                jasmineEnv.execute();
+            });
+
+
         }
   )
   </script>
