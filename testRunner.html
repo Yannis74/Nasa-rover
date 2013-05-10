@@ -1,0 +1,28 @@
+
+<!doctype html>
+<html>
+<head>
+  <title>Test'em Runner</title>
+  <script src="/testem/jasmine.js"></script>
+  <script src="/testem.js"></script>
+  <script src="/testem/jasmine-html.js"></script>
+
+  <link rel="stylesheet" href="/testem/jasmine.css">
+  </head>
+<body>
+  <div id="jasmine_content"></div>
+  <script src="js/libs/require.js"></script>
+  <script type="text/javascript">
+  require(
+        ['tests/roverTest'],
+        function(roverTest){
+          var jasmineEnv = jasmine.getEnv()
+          jasmineEnv.addReporter(new jasmine.HtmlReporter)
+          window.onload = function() {
+            jasmineEnv.execute()
+          };
+        }
+  )
+  </script>
+</body>
+</html>
