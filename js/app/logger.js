@@ -3,7 +3,7 @@ define(["jquery"], function($){
 	var logger = {
 		$el: $(".logger"),
 		log: function(strText){
-			logger.$el.append("<p>" + strText + "</p>");
+			logger.$el.append(strText + "<br/>");
 		},
 		clear: function(){
 			logger.$el.empty();	
