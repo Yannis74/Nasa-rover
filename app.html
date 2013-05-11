@@ -3,24 +3,36 @@
     <head>
         <title>jQuery+RequireJS Sample Page</title>
         <script data-main="js/main" src="js/libs/require.js"></script>
+        <style>
+        body{padding:10px 100px 0 100px;}
+        .logger{
+            height: 100px;
+            overflow: auto;
+            border: 1px solid blue;
+            padding: 10px;
+            width: 50%;
+        }
+        </style>
     </head>
     <body>
         <h1>NASA Rover Test</h1>
 
         <form>
 			<textarea cols="40" rows="5" name="myname">
-				5 5
+5 5
 
-				1 2 N
+1 2 N
 
-				LMLMLMLMM
+LMLMLMLMM
 
-				3 3 E
+3 3 E
 
-				MMRMMRMRRM
+MMRMMRMRRM
 			</textarea>
-
+<br/><br/>
 			<input type="button" value="Deploy Rovers" >
         </form>
+        <br/><br/>
+        <div class="logger"></div>
     </body>
 </html>
