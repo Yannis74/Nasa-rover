@@ -1,11 +1,15 @@
 /**
-Rover class
-this module defines the Rover class and it's private vars/functions
+rover module
+This module defines the Rover class and it's private vars/functions
 Rover class constructor takes a configuration object.
+NOTE: A unit test has been created for this read the README.md for 
+	  instructions on running.
 configuration object properties:
 		location: {"x":{number},"y":{number}},
 		position: ["N"|"E"|"S"|"W"],
-		[log: {function}] //a function that provides logging
+		[log: {function}] //a function that provides logging. The default 
+						  //logging, when none provided by the user, is 
+						  //more suited to unit testing (see tests folder);
 **/
 define(["jquery"], function($){
 	//private vars
@@ -13,10 +17,6 @@ define(["jquery"], function($){
 		location: {"x":0,"y":0},
 		position: "N"
 	};
-
-	var log = null;
-
-	var strPositions = "NESW";
 
 	//private functions
 	var calculateNewLocation = function(location, position){
@@ -39,21 +39,23 @@ define(["jquery"], function($){
 
 	var calculateNewPosition = function(command, currentPosition){
 		var position,
+			strPositions = "NESW",
 			index = strPositions.indexOf(currentPosition);
 
 		if(command === "L"){
 			position = strPositions.substr(index - 1, 1);
 		}else if(command === "R"){
+			index = index === 3? -1 : index;
 			position = strPositions.substr(index + 1, 1);
 		}
 
 		return position;
 	}
 
-	var isValidLocation = function(location){
+	var isValidLocationObject = function(location){
 			if(typeof location !== "undefined" &&
 				typeof location.x === "number" &&
-				 typeof location.y === "number" ){
+				typeof location.y === "number" ){
 
 				return true;
 			}else{
@@ -61,25 +63,21 @@ define(["jquery"], function($){
 			}
 	}
 
-	//Rover class constructor
+	//Rover constructor
 	function Rover(config){
 		var location;
-
 		//if no position or location is given
 		//then use the default position/location
 		this.config = $.extend({}, roverDefaults, config);
 
-		if( !isValidLocation(this.config.location) ){
+		if( !isValidLocationObject(this.config.location) ){
 			throw new Error("Rover constructor: location object is not valid");
 		}
 
-		//Use own logging method if not supplied
-		if( !this.config.hasOwnProperty("log") ){
-			this.config.log = this.setLogList;
-		}
-
-		//passed to private var for convenience
-		log = this.config.log;
+		//Use logging method if supplied
+		if( this.config.hasOwnProperty("log") ){
+			this.setLog = this.config.log;
+		}		
 
 		location = this.getLocation();
 		//this property identifies the rover for use in logs.
@@ -92,17 +90,17 @@ define(["jquery"], function($){
 	}
 
 	Rover.prototype = {
-		logList:[],
 		deployRover: function(){
 
 			this.askIfMoveIsPossible(this.getLocation(), function(move){
 				var location;
+
 				if(move === false){
-					log("Rover '" + this.roverTag + "' could not complete " +
+					this.setLog("Rover '" + this.roverTag + "' could not complete " +
 					"it's mission as it was deployed outside the designated area!");
 				}else{
 					location = this.getLocation();
-					log("Rover '" + this.roverTag + "' has been deployed " +
+					this.setLog("Rover '" + this.roverTag + "' has been deployed " +
 					"at Mars location x:" + location.x + ' y:' + location.y +
 					" facing: " + this.getPosition());
 				}
@@ -114,7 +112,17 @@ define(["jquery"], function($){
 				i = 0,
 				location,
 				position,
-				len = strCommands.length;
+				len = strCommands.length,
+				re = new RegExp("^([M|L|R|\s*|\n*]+)$");
+
+			/*
+			if(!strCommands.match(re)){
+
+				this.setLog("Commands for rover '" + this.roverTag + "' are not valid. Mission terminated!");
+				$.publish("roverFinished");
+				return false;
+			}
+			*/
 
 			//loop thru move commands				
 			while(strCommands.length > 0){
@@ -123,13 +131,13 @@ define(["jquery"], function($){
 				location = this.getLocation();
 				position = this.getPosition();
 
-				log("Rover '" + this.roverTag + "' is executing command: " + 
+				this.setLog("Rover '" + this.roverTag + "' is executing command: " + 
 					command + " and is located at: x" + location.x +
 					" y:" + location.y + " facing: " + position);
 
 				if(command === "L" || command === "R"){
 
-					this.setPosition(command);
+					this.setPosition(calculateNewPosition(command, this.getPosition()));
 				}else if(command === "M"){
 
 					//Store remaining move commands
@@ -159,30 +167,40 @@ define(["jquery"], function($){
 			location = this.getLocation();
 			position = this.getPosition();
 
-			log("Rover '" + this.roverTag + "' final location is: x" + 
+			this.setLog("Rover '" + this.roverTag + "' final location is: x" + 
 				location.x + " y:" + location.y + " facing: " + position);
 
 			$.publish("roverFinished");
 			this.cleanup();
 
 		},
-		setLogList: function(strMessage){
-			this.logList[this.logList.length] = strMessage;
-		},
+		/**
+		* askIfMoveIsPossible
+		* method that raises 'canRoverMoveHere' event which can be 'listened'
+		* to by grid (or any other module that might be interested). A response
+		* is expected in the form of 'gridResponse'. A callback is triggered
+		* on 'gridResponse' and is passed the answer along with the location 
+		* that was queried.
+		* if noGrid set to true no event is published and callback is executed
+		* @param {object} nexLocation: location object
+		* @param {function} callback
+		**/
 		askIfMoveIsPossible: function(nextLocation, callback){
 			var self = this;
-			//Using Pub/Sub system for Loosely Coupled logic.
-			$.unsubscribe("gridResponse");
 
-			//listen to important messages
-			$.subscribe("gridResponse", function(event, move, location){
-				callback.call(self, move, location);
-			});
+			if(!self.config.noGrid){
+				//Using Pub/Sub system for Loosely Coupled logic.
+				$.unsubscribe("gridResponse");
 
-			$.publish("canRoverMoveHere", [nextLocation] );
+				//listen to important messages
+				$.subscribe("gridResponse", function(event, move, location){
+					callback.call(self, move, location);
+				});
 
-			if(self.config.noGrid){
-				callback(move, location);
+				$.publish("canRoverMoveHere", [nextLocation] );
+
+			}else{
+				callback.call(self, true, nextLocation);
 			}
 		},
 		moveForward: function(move, newLocation){
@@ -192,8 +210,10 @@ define(["jquery"], function($){
 				//continue 'move' method with remaining commands
 				this.move(this.remainingCommands);
 			}else{
-				log("Rover '" + this.roverTag + "' could not complete " +
+				this.setLog("Rover '" + this.roverTag + "' could not complete " +
 					"it's mission as it moved outside the designated area");
+
+				$.publish("roverFinished");
 			}
 		},
 
@@ -201,12 +221,13 @@ define(["jquery"], function($){
 			return this.config.position;
 		},
 
-		setPosition: function(command){
-			if(command === "L" || command === "R"){
-				this.config.position = calculateNewPosition(command, this.getPosition());
+		setPosition: function(position){
+			var strPositions = "NESW";
+			if(strPositions.indexOf(position) !== -1){
+				this.config.position = position;
 			}else{
 				throw new Error("setPosition: argument must" +
-					" be a string character of 'L' or 'R'"
+					" be a string character of 'N','E','S' or 'W'"
 				);	
 			}
 		},
@@ -217,7 +238,7 @@ define(["jquery"], function($){
 
 		setLocation: function(location){
 
-			if(isValidLocation(location)){
+			if(isValidLocationObject(location)){
 				this.config.location = location;
 			}else{
 				throw new Error("setLocation: argument must" +
@@ -225,8 +246,11 @@ define(["jquery"], function($){
 				);
 			}
 		},
+		setLog: function(strMessage){
+			this.log = strMessage;
+		},
 		getLastLog: function(){
-			return this.logList[this.logList.length - 1];
+			return this.log;
 		},
 		cleanup: function(){
 			$.unsubscribe("gridResponse");

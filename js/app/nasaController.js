@@ -1,3 +1,16 @@
+
+/**
+nasa module
+this module defines the nasa object. It manages the rovers/grid and 
+handles input from the textarea. It starts the rovers one at a time by listening to the
+'roverFinished' event.
+init param:
+        @param grid grid module
+        @param Rover the class that creates rovers
+        @param logger module that logs messages on screen
+
+**/
+
 define(["jquery"], function($){
     var log;
 	var nasa = {
@@ -10,18 +23,26 @@ define(["jquery"], function($){
 
 			nasa.$elDeploy.click(function(){
 
+                //clear the logs from view
                 logger.clear();
+                //assigning logging function to log for convenience
                 log = logger.log;
+                //reset data constructs
                 nasa.reset();
-				nasa.getCommands();
+                //get user input and populate data constructs
+				nasa.handleInput();
+
                 nasa.grid = grid;
                 nasa.grid.cleanup();
+                //initialise grid with dimensions
                 nasa.grid.init(nasa.marsGrid, logger.log);
+                //Create rovers and initialise with starting location/position
                 nasa.registerAllRovers(Rover, logger);
+                //Each rovers executes given commands one at a time
                 nasa.startRovers();
 
 			});
-
+            //'listen' for when a rover has finished performing it's commands
 			$.subscribe("roverFinished", nasa.startRovers);
 		},
         reset: function(){
@@ -29,8 +50,6 @@ define(["jquery"], function($){
             nasa.deployments = [];
             for(i; nasa.rovers[i]; i++){
                 nasa.rovers[i].rover.cleanup();
-                nasa.rovers[i].rover = null;
-                nasa.rovers[i].commands = "";
             }
 
             nasa.rovers = [];
@@ -38,6 +57,8 @@ define(["jquery"], function($){
             nasa.marsGrid = null;
         },
         registerAllRovers: function(Rover, logger){
+            //nasa.deployments stores deployment location 
+            //and position for each rover.
             $.each(nasa.deployments, function(){
                 nasa.registerRover(new Rover({
                         location: this.location,
@@ -52,7 +73,7 @@ define(["jquery"], function($){
 		startRovers: function(){
             var commands;
             if( (nasa.rovers.length-1) === nasa.roverIndex){
-                log("Nasa ground control: All rovers have completed their missions!");
+                log("Nasa controller: All rovers have completed their missions!");
                 return;
             }
             nasa.roverIndex++;
@@ -60,7 +81,9 @@ define(["jquery"], function($){
 
 			nasa.rovers[nasa.roverIndex].rover.move(commands);
 		},
-		getCommands: function(){
+		handleInput: function(){
+            //gets all inputs from user
+            //formats and stores for later use.
 			var i = 1;
 	        var nasaInput = nasa.cleanInput(nasa.$elInput.val());
 
