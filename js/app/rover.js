@@ -162,6 +162,9 @@ define(["jquery"], function($){
 			log("Rover '" + this.roverTag + "' final location is: x" + 
 				location.x + " y:" + location.y + " facing: " + position);
 
+			$.publish("roverFinished");
+			this.cleanup();
+
 		},
 		setLogList: function(strMessage){
 			this.logList[this.logList.length] = strMessage;
@@ -225,6 +228,9 @@ define(["jquery"], function($){
 		getLastLog: function(){
 			return this.logList[this.logList.length - 1];
 		},
+		cleanup: function(){
+			$.unsubscribe("gridResponse");
+		}
 	}
 
 	return Rover;

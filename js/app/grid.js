@@ -23,11 +23,10 @@ define(["jquery"], function($){
 		},
 
 		isInsideGrid: function(event, location){
-			
 			if(marsGrid.isValidGrid(location)){
-				if(location.x < marsGrid.gridDimensions.x &&
+				if(location.x <= marsGrid.gridDimensions.x &&
 					location.x >= 0 &&
-					location.y < marsGrid.gridDimensions.y &&
+					location.y <= marsGrid.gridDimensions.y &&
 					location.y >= 0){
 
 					$.publish("gridResponse", [true, location]);
@@ -66,6 +65,9 @@ define(["jquery"], function($){
 		getLastLog: function(){
 			return marsGrid.logList[marsGrid.logList.length - 1];
 		},
+		cleanup: function(){
+			$.unsubscribe("canRoverMoveHere", marsGrid.isInsideGrid);
+		}
 	}
 
 	return marsGrid;
