@@ -2,13 +2,13 @@
 rover module
 This module defines the Rover class and it's private vars/functions
 Rover class constructor takes a configuration object.
-NOTE: A unit test has been created for this read the README.md for 
+NOTE: A unit test has been created for this read the README.md for
 	  instructions on running.
 configuration object properties:
 		location: {"x":{number},"y":{number}},
 		position: ["N"|"E"|"S"|"W"],
-		[log: {function}] //a function that provides logging. The default 
-						  //logging, when none provided by the user, is 
+		[log: {function}] //a function that provides logging. The default
+						  //logging, when none provided by the user, is
 						  //more suited to unit testing (see tests folder);
 **/
 define(["jquery"], function($){
@@ -35,7 +35,7 @@ define(["jquery"], function($){
 				break;
 		}
 		return location;
-	}
+	};
 
 	var calculateNewPosition = function(command, currentPosition){
 		var position,
@@ -50,7 +50,7 @@ define(["jquery"], function($){
 		}
 
 		return position;
-	}
+	};
 
 	var isValidLocationObject = function(location){
 			if(typeof location !== "undefined" &&
@@ -61,7 +61,7 @@ define(["jquery"], function($){
 			}else{
 				return false;
 			}
-	}
+	};
 
 	//Rover constructor
 	function Rover(config){
@@ -75,9 +75,10 @@ define(["jquery"], function($){
 		}
 
 		//Use logging method if supplied
-		if( this.config.hasOwnProperty("log") ){
+		if( this.config.hasOwnProperty("log") &&
+			typeof this.config.log === "function"){
 			this.setLog = this.config.log;
-		}		
+		}
 
 		location = this.getLocation();
 		//this property identifies the rover for use in logs.
@@ -124,14 +125,14 @@ define(["jquery"], function($){
 			}
 			*/
 
-			//loop thru move commands				
+			//loop thru move commands
 			while(strCommands.length > 0){
 
 				command = strCommands.substr(0,1);
 				location = this.getLocation();
 				position = this.getPosition();
 
-				this.setLog("Rover '" + this.roverTag + "' is executing command: " + 
+				this.setLog("Rover '" + this.roverTag + "' is executing command: " +
 					command + " and is located at: x" + location.x +
 					" y:" + location.y + " facing: " + position);
 
@@ -141,8 +142,8 @@ define(["jquery"], function($){
 				}else if(command === "M"){
 
 					//Store remaining move commands
-					//and exit method. 'move' method will 
-					//be restarted by 'moveForward' method. 
+					//and exit method. 'move' method will
+					//be restarted by 'moveForward' method.
 					this.remainingCommands = strCommands;
 
 					//askIfMoveIsPossible raises asynchronous
@@ -167,7 +168,7 @@ define(["jquery"], function($){
 			location = this.getLocation();
 			position = this.getPosition();
 
-			this.setLog("Rover '" + this.roverTag + "' final location is: x" + 
+			this.setLog("Rover '" + this.roverTag + "' final location is: x" +
 				location.x + " y:" + location.y + " facing: " + position);
 
 			$.publish("roverFinished");
@@ -179,7 +180,7 @@ define(["jquery"], function($){
 		* method that raises 'canRoverMoveHere' event which can be 'listened'
 		* to by grid (or any other module that might be interested). A response
 		* is expected in the form of 'gridResponse'. A callback is triggered
-		* on 'gridResponse' and is passed the answer along with the location 
+		* on 'gridResponse' and is passed the answer along with the location
 		* that was queried.
 		* if noGrid set to true no event is published and callback is executed
 		* @param {object} nexLocation: location object
@@ -228,7 +229,7 @@ define(["jquery"], function($){
 			}else{
 				throw new Error("setPosition: argument must" +
 					" be a string character of 'N','E','S' or 'W'"
-				);	
+				);
 			}
 		},
 
